@@ -1,0 +1,23 @@
+The approach to creating custom heuristics for the A* algorithm was driven by the specific challenges presented by the map's layout, particularly the "rotated-H" shaped obstacle. The goal was to design heuristics that would guide the pathfinding algorithm more efficiently around this obstacle compared to general-purpose heuristics like Euclidean or Manhattan distances.
+
+Approach
+Custom Heuristic I: This heuristic discouraged rightward exploration until the path had moved either above or below the obstacle. It aimed to encourage vertical movement, which is particularly effective if the obstacle spans a significant horizontal distance.
+
+Custom Heuristic II: This heuristic focused on exploring either upward or downward before moving rightward, depending on the starting point's relative vertical position to the obstacle. If the start was closer to the upper edge of the map, the heuristic encouraged upward movement first, and vice versa.
+
+Results and Comparison
+General-Purpose Heuristics (Euclidean and Manhattan):
+
+These heuristics guide the algorithm based on the direct distance to the goal without considering specific obstacles on the map.
+They tend to result in more nodes being explored, especially when the obstacle significantly blocks the direct path to the goal.
+They are less efficient in maps with large, complex obstacles.
+Custom Heuristic I:
+
+This heuristic resulted in fewer nodes being explored compared to general-purpose heuristics in scenarios where the obstacle spanned a large horizontal area.
+It was more efficient in guiding the algorithm around the obstacle but could lead to longer paths if the start and goal were aligned horizontally.
+Custom Heuristic II:
+
+This heuristic proved particularly effective when the start point was significantly closer to either the top or bottom of the map. It reduced the number of nodes explored by directing the path to move vertically around the obstacle.
+It outperformed general-purpose heuristics in scenarios where vertical movement around the obstacle was the key to finding an efficient path.
+Conclusion
+The customized heuristics were tailored to the specific layout of the map and the nature of the obstacles, resulting in more efficient pathfinding in certain scenarios compared to Euclidean and Manhattan heuristics. They demonstrate how heuristic design can be crucial in pathfinding algorithms, especially in environments with unique challenges. While these custom heuristics were optimized for the specific case of the "rotated-H" obstacle, their effectiveness would vary in different environments, highlighting the importance of heuristic selection based on the nature of the terrain and obstacles in pathfinding problems.

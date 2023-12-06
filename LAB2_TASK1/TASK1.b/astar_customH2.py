@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from queue import Queue
+from queue import PriorityQueue
 import matplotlib.cm as cm
+import itertools
 
 class Node:
     def __init__(self, position, parent=None):
@@ -53,7 +54,7 @@ def generateMap2d_obstacle(size_):
             map2d[goalp[0], goalp[1]] = -3  # Goal point
             break
 
-    return map2d, startp, goalp
+    return map2d, startp, goalp, ytop, ybot, maxx
 
 def get_neighbors(node, map2d):
     directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -66,31 +67,59 @@ def get_neighbors(node, map2d):
             neighbors.append((nx, ny))
     return neighbors
 
-def bfs_search(map2d, start, goal):
-    start_node = Node(start)
-    goal_node = Node(goal)
-    queue = Queue()
-    queue.put(start_node)
-    visited = set([start])
+def custom_heuristic_II(node_position, goal_position, ytop, ybot, start_y):
+    x, y = node_position
+    goal_x, goal_y = goal_position
 
-    while not queue.empty():
-        current_node = queue.get()
+    # Determine if we should prioritize moving up or down
+    move_up = start_y < (ybot + ytop) / 2
 
-        # Debugging output
-        print(f"Visiting: {current_node.position}")
+    # If above the top part or below the bottom part of the obstacle, use Manhattan distance
+    if y > ytop or y < ybot:
+        return abs(goal_x - x) + abs(goal_y - y)
+
+    # If within the obstacle's vertical range
+    if move_up:
+        # Prioritize moving up if starting point is closer to the top
+        return (y - ybot) + abs(goal_x - x) + abs(goal_y - ybot)
+    else:
+        # Otherwise, prioritize moving down
+        return (ytop - y) + abs(goal_x - x) + abs(goal_y - ytop)
+
+
+def a_star_search_II(map2d, start, goal, ytop, ybot):
+    start_node = Node(start, None)
+    goal_node = Node(goal, None)
+    open_set = PriorityQueue()
+    count = itertools.count()
+    open_set.put((0, next(count), start_node))
+    visited = set()
+    g_costs = {start: 0}
+
+    while not open_set.empty():
+        _, _, current_node = open_set.get()
 
         if current_node.position == goal:
             return current_node.get_path()
 
+        visited.add(current_node.position)
+
         for neighbor in get_neighbors(current_node.position, map2d):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.put(Node(neighbor, current_node))
+            if neighbor in visited:
+                continue
 
-    return []  # No path found if the goal is not reached
+            tentative_g_cost = g_costs[current_node.position] + 1
+
+            if neighbor not in g_costs or tentative_g_cost < g_costs[neighbor]:
+                g_costs[neighbor] = tentative_g_cost
+                f_cost = tentative_g_cost + custom_heuristic_II(neighbor, goal, ytop, ybot, start[1])
+                neighbor_node = Node(neighbor, current_node)
+                open_set.put((f_cost, next(count), neighbor_node))
+
+    return []  # No path found
 
 
-def plotMap(map2d_, path_, title_='BFS Search Path'):
+def plotMap(map2d_, path_, title_='A* Search Path'):
     plt.interactive(False)
 
     greennumber = int(map2d_.max() + 1)
@@ -119,18 +148,16 @@ def plotMap(map2d_, path_, title_='BFS Search Path'):
     plt.xlim(0, map2d_.shape[1])
     plt.show()
 
-# Generate map with obstacles
+
+# Testing the DFS Search Algorithm
 map_size = (100, 100)
-map_with_obstacle, start, goal = generateMap2d_obstacle(map_size)
+map_with_obstacle, start, goal , ytop, ybot, maxx= generateMap2d_obstacle(map_size)
 
+# Run A* search with custom heuristic II
+path = a_star_search_II(map_with_obstacle, tuple(start), tuple(goal), ytop, ybot)
 
-# Run BFS
-path = bfs_search(map_with_obstacle, tuple(start), tuple(goal))
-
-# Print start, goal, and path for debugging
-print(f"Start: {start}, Goal: {goal}")
-print(f"Path: {path}")
-
+# Print path for debugging
+print("Path:", path)
 
 # Plot the path
-plotMap(map_with_obstacle, path)  # Pass the path directly
+plotMap(map_with_obstacle, path)

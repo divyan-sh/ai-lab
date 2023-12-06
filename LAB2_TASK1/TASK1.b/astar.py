@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from queue import Queue
+from queue import PriorityQueue
 import matplotlib.cm as cm
+import itertools
 
 class Node:
     def __init__(self, position, parent=None):
@@ -66,31 +67,43 @@ def get_neighbors(node, map2d):
             neighbors.append((nx, ny))
     return neighbors
 
-def bfs_search(map2d, start, goal):
-    start_node = Node(start)
-    goal_node = Node(goal)
-    queue = Queue()
-    queue.put(start_node)
-    visited = set([start])
+def a_star_search(map2d, start, goal):
+    def manhattan_distance(node_position, goal_position):
+        dx = abs(node_position[0] - goal_position[0])
+        dy = abs(node_position[1] - goal_position[1])
+        return dx + dy
 
-    while not queue.empty():
-        current_node = queue.get()
+    start_node = Node(start, None)
+    goal_node = Node(goal, None)
+    open_set = PriorityQueue()
+    count = itertools.count()  # Unique sequence count
+    open_set.put((0, next(count), start_node))
+    visited = set()
+    g_costs = {start: 0}
 
-        # Debugging output
-        print(f"Visiting: {current_node.position}")
+    while not open_set.empty():
+        _, _, current_node = open_set.get()
 
         if current_node.position == goal:
             return current_node.get_path()
 
+        visited.add(current_node.position)
+
         for neighbor in get_neighbors(current_node.position, map2d):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.put(Node(neighbor, current_node))
+            if neighbor in visited:
+                continue
 
-    return []  # No path found if the goal is not reached
+            tentative_g_cost = g_costs[current_node.position] + 1
 
+            if neighbor not in g_costs or tentative_g_cost < g_costs[neighbor]:
+                g_costs[neighbor] = tentative_g_cost
+                f_cost = tentative_g_cost + manhattan_distance(neighbor, goal)
+                neighbor_node = Node(neighbor, current_node)
+                open_set.put((f_cost, next(count), neighbor_node))
 
-def plotMap(map2d_, path_, title_='BFS Search Path'):
+    return []  # No path found
+
+def plotMap(map2d_, path_, title_='DFS Search Path'):
     plt.interactive(False)
 
     greennumber = int(map2d_.max() + 1)
@@ -119,13 +132,14 @@ def plotMap(map2d_, path_, title_='BFS Search Path'):
     plt.xlim(0, map2d_.shape[1])
     plt.show()
 
-# Generate map with obstacles
+
+# Testing the DFS Search Algorithm
 map_size = (100, 100)
 map_with_obstacle, start, goal = generateMap2d_obstacle(map_size)
 
 
 # Run BFS
-path = bfs_search(map_with_obstacle, tuple(start), tuple(goal))
+path = a_star_search(map_with_obstacle, tuple(start), tuple(goal))
 
 # Print start, goal, and path for debugging
 print(f"Start: {start}, Goal: {goal}")

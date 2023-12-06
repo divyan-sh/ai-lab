@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from queue import Queue
+from queue import LifoQueue  # Using LifoQueue as a stack
 import matplotlib.cm as cm
 
 class Node:
@@ -66,31 +66,27 @@ def get_neighbors(node, map2d):
             neighbors.append((nx, ny))
     return neighbors
 
-def bfs_search(map2d, start, goal):
+def dfs_search(map2d, start, goal):
     start_node = Node(start)
     goal_node = Node(goal)
-    queue = Queue()
-    queue.put(start_node)
+    stack = LifoQueue()
+    stack.put(start_node)
     visited = set([start])
 
-    while not queue.empty():
-        current_node = queue.get()
+    while not stack.empty():
+        current_node = stack.get()
 
-        # Debugging output
-        print(f"Visiting: {current_node.position}")
-
-        if current_node.position == goal:
+        if current_node.position == goal_node.position:
             return current_node.get_path()
 
         for neighbor in get_neighbors(current_node.position, map2d):
             if neighbor not in visited:
                 visited.add(neighbor)
-                queue.put(Node(neighbor, current_node))
+                stack.put(Node(neighbor, current_node))
 
-    return []  # No path found if the goal is not reached
+    return []  # No path found
 
-
-def plotMap(map2d_, path_, title_='BFS Search Path'):
+def plotMap(map2d_, path_, title_='DFS Search Path'):
     plt.interactive(False)
 
     greennumber = int(map2d_.max() + 1)
@@ -119,13 +115,13 @@ def plotMap(map2d_, path_, title_='BFS Search Path'):
     plt.xlim(0, map2d_.shape[1])
     plt.show()
 
-# Generate map with obstacles
+# Testing the DFS Search Algorithm
 map_size = (100, 100)
 map_with_obstacle, start, goal = generateMap2d_obstacle(map_size)
 
 
 # Run BFS
-path = bfs_search(map_with_obstacle, tuple(start), tuple(goal))
+path = dfs_search(map_with_obstacle, tuple(start), tuple(goal))
 
 # Print start, goal, and path for debugging
 print(f"Start: {start}, Goal: {goal}")
